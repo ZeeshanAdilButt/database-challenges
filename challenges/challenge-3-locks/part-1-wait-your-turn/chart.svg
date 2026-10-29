@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="548" viewBox="0 0 780 548" font-family="Arial, sans-serif" font-size="12">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="12" y="26" font-size="16" font-weight="bold" fill="#111">A holds a lock for 300 ms. Does B wait?</text>
+<text x="12" y="82" font-weight="bold" fill="#111">sqlite same: A</text>
+<text x="12" y="138" font-weight="bold" fill="#111">sqlite same: B</text>
+<text x="12" y="194" font-weight="bold" fill="#111">sqlite other: A</text>
+<text x="12" y="250" font-weight="bold" fill="#111">sqlite other: B</text>
+<text x="12" y="306" font-weight="bold" fill="#111">postgres same: A</text>
+<text x="12" y="362" font-weight="bold" fill="#111">postgres same: B</text>
+<text x="12" y="418" font-weight="bold" fill="#111">postgres other: A</text>
+<text x="12" y="474" font-weight="bold" fill="#111">postgres other: B</text>
+<rect x="123.82716049382717" y="60" width="306.17283950617286" height="36" rx="4" fill="#1f7a4d"/>
+<text x="129.82716049382717" y="82" fill="#fff">claimed it</text>
+<rect x="169.25925925925924" y="116" width="317.037037037037" height="36" rx="4" fill="#b9770e"/>
+<text x="175.25925925925924" y="138" fill="#fff">waits</text>
+<rect x="486.29629629629625" y="116" width="2.9629629629629903" height="36" rx="4" fill="#34495e"/>
+<rect x="120.8641975308642" y="172" width="307.1604938271605" height="36" rx="4" fill="#1f7a4d"/>
+<text x="126.8641975308642" y="194" fill="#fff">claimed it</text>
+<rect x="167.28395061728395" y="228" width="272.59259259259255" height="36" rx="4" fill="#b9770e"/>
+<text x="173.28395061728395" y="250" fill="#fff">waits</text>
+<rect x="439.8765432098765" y="228" width="310.1234567901235" height="36" rx="4" fill="#1f7a4d"/>
+<text x="445.8765432098765" y="250" fill="#fff">claimed it</text>
+<rect x="120.8641975308642" y="284" width="9.87654320987653" height="36" rx="4" fill="#b9770e"/>
+<rect x="130.74074074074073" y="284" width="320.98765432098764" height="36" rx="4" fill="#1f7a4d"/>
+<text x="136.74074074074073" y="306" fill="#fff">claimed it</text>
+<rect x="167.28395061728395" y="340" width="285.4320987654321" height="36" rx="4" fill="#b9770e"/>
+<text x="173.28395061728395" y="362" fill="#fff">waits</text>
+<rect x="452.71604938271605" y="340" width="3.950617283950578" height="36" rx="4" fill="#34495e"/>
+<rect x="124.81481481481481" y="396" width="315.06172839506166" height="36" rx="4" fill="#1f7a4d"/>
+<text x="130.8148148148148" y="418" fill="#fff">claimed it</text>
+<rect x="170.2469135802469" y="452" width="310.12345679012344" height="36" rx="4" fill="#1f7a4d"/>
+<text x="176.2469135802469" y="474" fill="#fff">claimed it</text>
+<line x1="110" y1="508" x2="750" y2="508" stroke="#888"/>
+<text x="110" y="524" text-anchor="middle" fill="#555">0 ms</text>
+<text x="270" y="524" text-anchor="middle" fill="#555">162 ms</text>
+<text x="430" y="524" text-anchor="middle" fill="#555">324 ms</text>
+<text x="590" y="524" text-anchor="middle" fill="#555">486 ms</text>
+<text x="750" y="524" text-anchor="middle" fill="#555">648 ms</text>
+</svg>

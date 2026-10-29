@@ -1,0 +1,11 @@
+# PostgreSQL for the challenges. SQLite needs nothing: it is built into Node.js.
+# Port 5440 on your machine, so it does not clash with a PostgreSQL on 5432.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: challenge
+      POSTGRES_PASSWORD: challenge
+      POSTGRES_DB: challenges
+    ports:
+      - "5440:5432"

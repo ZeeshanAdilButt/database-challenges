@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1326" height="366" viewBox="0 0 1326 366" font-family="Arial, sans-serif" font-size="12">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="12" y="26" font-size="16" font-weight="bold" fill="#111">Time to drain 100 tasks (20 ms of work each) with 4 workers</text>
+<line x1="60" y1="270" x2="1316" y2="270" stroke="#888"/>
+<text x="12" y="60" fill="#555">ms</text>
+<rect x="70" y="201" width="56" height="69" fill="#34495e"/>
+<text x="98" y="195" text-anchor="middle" fill="#111">3105</text>
+<rect x="134" y="263" width="56" height="7" fill="#b9770e"/>
+<text x="162" y="257" text-anchor="middle" fill="#111">335</text>
+<text x="130" y="288" text-anchor="middle" font-weight="bold" fill="#111">sqlite: one worker alone</text>
+<rect x="248" y="194" width="56" height="76" fill="#c0392b"/>
+<text x="276" y="188" text-anchor="middle" fill="#111">3387</text>
+<rect x="312" y="50" width="56" height="220" fill="#b9770e"/>
+<text x="340" y="44" text-anchor="middle" fill="#111">9853</text>
+<text x="308" y="288" text-anchor="middle" font-weight="bold" fill="#111">sqlite: begin immediate</text>
+<rect x="426" y="234" width="56" height="36" fill="#1f7a4d"/>
+<text x="454" y="228" text-anchor="middle" fill="#111">1595</text>
+<rect x="490" y="191" width="56" height="79" fill="#b9770e"/>
+<text x="518" y="185" text-anchor="middle" fill="#111">3517</text>
+<text x="486" y="288" text-anchor="middle" font-weight="bold" fill="#111">sqlite: short claim</text>
+<rect x="604" y="198" width="56" height="72" fill="#34495e"/>
+<text x="632" y="192" text-anchor="middle" fill="#111">3217</text>
+<rect x="668" y="249" width="56" height="21" fill="#b9770e"/>
+<text x="696" y="243" text-anchor="middle" fill="#111">919</text>
+<text x="664" y="288" text-anchor="middle" font-weight="bold" fill="#111">postgres: one worker alone</text>
+<rect x="782" y="198" width="56" height="72" fill="#c0392b"/>
+<text x="810" y="192" text-anchor="middle" fill="#111">3226</text>
+<rect x="846" y="55" width="56" height="215" fill="#b9770e"/>
+<text x="874" y="49" text-anchor="middle" fill="#111">9628</text>
+<text x="842" y="288" text-anchor="middle" font-weight="bold" fill="#111">postgres: for update</text>
+<rect x="960" y="248" width="56" height="22" fill="#1f7a4d"/>
+<text x="988" y="242" text-anchor="middle" fill="#111">979</text>
+<rect x="1024" y="264" width="56" height="6" fill="#b9770e"/>
+<text x="1052" y="258" text-anchor="middle" fill="#111">265</text>
+<text x="1020" y="288" text-anchor="middle" font-weight="bold" fill="#111">postgres: skip locked</text>
+<rect x="1138" y="243" width="56" height="27" fill="#1f7a4d"/>
+<text x="1166" y="237" text-anchor="middle" fill="#111">1230</text>
+<rect x="1202" y="223" width="56" height="47" fill="#b9770e"/>
+<text x="1230" y="217" text-anchor="middle" fill="#111">2095</text>
+<text x="1198" y="288" text-anchor="middle" font-weight="bold" fill="#111">postgres: short claim</text>
+<rect x="60" y="300" width="12" height="12" fill="#34495e"/>
+<text x="78" y="310" fill="#111">total time (ms)</text>
+<rect x="60" y="318" width="12" height="12" fill="#b9770e"/>
+<text x="78" y="328" fill="#111">time spent waiting for locks, all workers (ms)</text>
+</svg>

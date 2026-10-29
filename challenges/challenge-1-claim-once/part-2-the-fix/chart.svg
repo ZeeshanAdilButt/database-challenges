@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1102" height="218" viewBox="0 0 1102 218" font-family="Arial, sans-serif" font-size="12">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="12" y="26" font-size="16" font-weight="bold" fill="#111">Checked update: watcher B changes 0 rows and skips</text>
+<line x1="110" y1="82" x2="1092" y2="82" stroke="#ccc"/>
+<text x="12" y="86" font-weight="bold" fill="#111">Watcher A</text>
+<line x1="110" y1="146" x2="1092" y2="146" stroke="#ccc"/>
+<text x="12" y="150" font-weight="bold" fill="#111">Watcher B</text>
+<rect x="110" y="58" width="150" height="48" rx="6" fill="#34495e"/>
+<text x="118" y="76" fill="#fff">reads task 1: pending</text>
+<text x="185" y="204" text-anchor="middle" fill="#555">1</text>
+<rect x="272" y="122" width="150" height="48" rx="6" fill="#34495e"/>
+<text x="280" y="140" fill="#fff">reads task 1: pending</text>
+<text x="347" y="204" text-anchor="middle" fill="#555">2</text>
+<rect x="434" y="58" width="150" height="48" rx="6" fill="#34495e"/>
+<text x="442" y="76" fill="#fff">claims task 1: 1 row</text>
+<text x="442" y="90" fill="#fff">changed</text>
+<text x="509" y="204" text-anchor="middle" fill="#555">3</text>
+<rect x="596" y="58" width="150" height="48" rx="6" fill="#34495e"/>
+<text x="604" y="76" fill="#fff">creates a session for</text>
+<text x="604" y="90" fill="#fff">task 1: saved</text>
+<text x="671" y="204" text-anchor="middle" fill="#555">4</text>
+<rect x="758" y="122" width="150" height="48" rx="6" fill="#1f7a4d"/>
+<text x="766" y="140" fill="#fff">claims task 1: 0 rows</text>
+<text x="766" y="154" fill="#fff">changed</text>
+<text x="833" y="204" text-anchor="middle" fill="#555">5</text>
+<rect x="920" y="122" width="150" height="48" rx="6" fill="#1f7a4d"/>
+<text x="928" y="140" fill="#fff">skips the task:</text>
+<text x="928" y="154" fill="#fff">someone else has it</text>
+<text x="995" y="204" text-anchor="middle" fill="#555">6</text>
+<text x="12" y="204" fill="#555">step</text>
+</svg>

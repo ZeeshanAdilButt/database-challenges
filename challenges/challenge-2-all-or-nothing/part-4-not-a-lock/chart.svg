@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="536" height="348" viewBox="0 0 536 348" font-family="Arial, sans-serif" font-size="12">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="12" y="26" font-size="16" font-weight="bold" fill="#111">Two watchers, each inside a transaction</text>
+<line x1="60" y1="270" x2="526" y2="270" stroke="#888"/>
+<text x="12" y="60" fill="#555">sessions for 1 task</text>
+<rect x="70" y="160" width="56" height="110" fill="#1f7a4d"/>
+<text x="98" y="154" text-anchor="middle" fill="#111">1</text>
+<text x="98" y="288" text-anchor="middle" font-weight="bold" fill="#111">sqlite, unchecked</text>
+<rect x="184" y="160" width="56" height="110" fill="#1f7a4d"/>
+<text x="212" y="154" text-anchor="middle" fill="#111">1</text>
+<text x="212" y="288" text-anchor="middle" font-weight="bold" fill="#111">sqlite, checked</text>
+<rect x="298" y="50" width="56" height="220" fill="#c0392b"/>
+<text x="326" y="44" text-anchor="middle" fill="#111">2</text>
+<text x="326" y="288" text-anchor="middle" font-weight="bold" fill="#111">postgres, unchecked</text>
+<rect x="412" y="160" width="56" height="110" fill="#1f7a4d"/>
+<text x="440" y="154" text-anchor="middle" fill="#111">1</text>
+<text x="440" y="288" text-anchor="middle" font-weight="bold" fill="#111">postgres, checked</text>
+<rect x="60" y="300" width="12" height="12" fill="#1f7a4d"/>
+<text x="78" y="310" fill="#111">sessions</text>
+</svg>

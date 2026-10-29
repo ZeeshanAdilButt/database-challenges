@@ -1,0 +1,18 @@
+{
+  "name": "database-challenges",
+  "private": true,
+  "type": "module",
+  "description": "Break a small task queue on PostgreSQL and SQLite, watch the race, then fix it.",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "doctor": "node toolkit/doctor.js",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "test": "node --test --test-concurrency=1 \"challenges/**/*.test.js\""
+  },
+  "dependencies": {
+    "pg": "^8.23.1"
+  }
+}
