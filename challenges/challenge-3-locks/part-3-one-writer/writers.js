@@ -8,7 +8,7 @@
 //   node writers.js           run on SQLite and PostgreSQL, write results.md and the chart
 //   node writers.js --chart   redraw the chart from results.md only
 import path from "node:path";
-import { addTasks, connect, duplicateSessions, freshDatabase, isMain, postgresIsUp, versions } from "../../../toolkit/db.js";
+import { addTasks, connect, duplicateSessions, freshDatabase, isMain, availableDatabases, versions } from "../../../toolkit/db.js";
 import { runUntilExit } from "../../../toolkit/workers.js";
 import { readTable, writeResults } from "../../../toolkit/results.js";
 import { barChart } from "../../../toolkit/chart.js";
@@ -85,9 +85,7 @@ function drawChart() {
 
 async function main() {
   if (process.argv.includes("--chart")) return drawChart();
-  const kinds = ["sqlite"];
-  if (await postgresIsUp()) kinds.push("postgres");
-  else console.log("PostgreSQL is not running, so only SQLite runs. Start it with: npm run db:up");
+  const kinds = await availableDatabases();
 
   const traps = {};
   for (const kind of kinds) {
@@ -99,6 +97,7 @@ async function main() {
     ["sqlite", "BEGIN IMMEDIATE", 0], ["sqlite", "BEGIN IMMEDIATE", 5000],
   ];
   if (kinds.includes("postgres")) plans.push(["postgres", "BEGIN", "none"]);
+  if (kinds.includes("mysql")) plans.push(["mysql", "BEGIN", "none"]);
   const writers = [];
   for (const [kind, begin, timeout] of plans) {
     const run = await fourWriters(kind, begin, timeout === "none" ? 0 : timeout);

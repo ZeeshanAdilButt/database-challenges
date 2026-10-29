@@ -7,7 +7,7 @@
 //   node claim.js           run on SQLite and PostgreSQL, write results.md and the charts
 //   node claim.js --chart   redraw the charts from results.md only
 import path from "node:path";
-import { addTasks, connect, duplicateSessions, freshDatabase, isMain, postgresIsUp, versions } from "../../../toolkit/db.js";
+import { addTasks, connect, duplicateSessions, freshDatabase, isMain, availableDatabases, versions } from "../../../toolkit/db.js";
 import { runWorkers } from "../../../toolkit/workers.js";
 import { readTable, writeResults } from "../../../toolkit/results.js";
 import { barChart, timelineChart } from "../../../toolkit/chart.js";
@@ -16,7 +16,7 @@ const here = import.meta.dirname;
 const RESULTS = path.join(here, "results.md");
 const PENDING = "SELECT id, status FROM tasks WHERE status = 'pending' ORDER BY id LIMIT 1";
 // The only line that differs from part 1: "AND status = 'pending'".
-// YOUR TURN (chapter 1.7): add the status check to this UPDATE.
+// YOUR TURN (chapter 1.8): add the status check to this UPDATE.
 const CLAIM = "UPDATE tasks SET status = 'claimed', claimed_by = $1 WHERE id = $2";
 // END YOUR TURN
 const SESSION = "INSERT INTO sessions (task_id, worker) VALUES ($1, $2)";
@@ -62,7 +62,7 @@ export async function realRun(kind, claim, { tasks = 200, pollMs = 50, batch = 1
     kind, dbName: "c1p2-real", claim, pollMs, batch,
   });
   const [{ sessions }] = await db.query("SELECT COUNT(*) AS sessions FROM sessions");
-  const [{ left }] = await db.query("SELECT COUNT(*) AS left FROM tasks WHERE status = 'pending'");
+  const [{ pending_left: left }] = await db.query("SELECT COUNT(*) AS pending_left FROM tasks WHERE status = 'pending'");
   const doubled = (await duplicateSessions(db)).length;
   await db.close();
   const lost = reports.reduce((sum, r) => sum + r.lost, 0);
@@ -97,9 +97,7 @@ function drawCharts() {
 
 async function main() {
   if (process.argv.includes("--chart")) return drawCharts();
-  const kinds = ["sqlite"];
-  if (await postgresIsUp()) kinds.push("postgres");
-  else console.log("PostgreSQL is not running, so only SQLite runs. Start it with: npm run db:up");
+  const kinds = await availableDatabases();
 
   const stepRuns = {};
   const realRuns = [];

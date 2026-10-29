@@ -2,13 +2,11 @@
 // task stuck as running.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { postgresIsUp } from "../../../toolkit/db.js";
+import { DATABASES, skipUnless } from "../../../toolkit/db.js";
 import { dieWhileRunning, tryMoves } from "./moves.js";
 
-const pgUp = await postgresIsUp();
-
-for (const kind of ["sqlite", "postgres"]) {
-  const skip = kind === "postgres" && !pgUp && "PostgreSQL is not running (npm run db:up)";
+for (const kind of DATABASES) {
+  const skip = await skipUnless(kind);
 
   test(`${kind}: stale, forbidden and misspelled moves are refused`, { skip }, async () => {
     const rows = await tryMoves(kind);

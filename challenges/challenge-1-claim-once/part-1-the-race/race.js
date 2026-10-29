@@ -6,7 +6,7 @@
 //   node race.js           run on SQLite and PostgreSQL, write results.md and the charts
 //   node race.js --chart   redraw the charts from results.md only
 import path from "node:path";
-import { addTasks, connect, duplicateSessions, freshDatabase, isMain, postgresIsUp, versions } from "../../../toolkit/db.js";
+import { addTasks, connect, duplicateSessions, freshDatabase, isMain, availableDatabases, versions } from "../../../toolkit/db.js";
 import { runWorkers } from "../../../toolkit/workers.js";
 import { readTable, writeResults } from "../../../toolkit/results.js";
 import { barChart, timelineChart } from "../../../toolkit/chart.js";
@@ -84,9 +84,7 @@ function drawCharts() {
 
 async function main() {
   if (process.argv.includes("--chart")) return drawCharts();
-  const kinds = ["sqlite"];
-  if (await postgresIsUp()) kinds.push("postgres");
-  else console.log("PostgreSQL is not running, so only SQLite runs. Start it with: npm run db:up");
+  const kinds = await availableDatabases();
 
   const stepRuns = {};
   const realRuns = [];

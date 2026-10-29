@@ -2,16 +2,14 @@
 // keeps the task's owner and its session in agreement.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { postgresIsUp } from "../../../toolkit/db.js";
+import { DATABASES, skipUnless } from "../../../toolkit/db.js";
 import { realRun, secondInsert } from "./safety.js";
 
-const pgUp = await postgresIsUp();
-
-for (const kind of ["sqlite", "postgres"]) {
-  const skip = kind === "postgres" && !pgUp && "PostgreSQL is not running (npm run db:up)";
+for (const kind of DATABASES) {
+  const skip = await skipUnless(kind);
 
   test(`${kind}: a second session for the same task is refused`, { skip }, async () => {
-    assert.match(await secondInsert(kind), /UNIQUE constraint failed|23505/);
+    assert.match(await secondInsert(kind), /UNIQUE constraint failed|23505|ER_DUP_ENTRY/);
   });
 
   test(`${kind}: with the bug, the index stops doubles but not wrong owners`, { skip }, async () => {

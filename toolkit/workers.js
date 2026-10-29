@@ -40,6 +40,37 @@ export function runUntilExit(scriptUrl, options) {
   });
 }
 
+// Start one copy of `scriptUrl` and keep it running. `firstStep()` waits for
+// its first report; `kill()` ends it the hard way (SIGKILL, no cleanup), like
+// a crash or a closed laptop lid, and waits until it has really gone.
+export function startProcess(scriptUrl, options) {
+  const child = fork(fileURLToPath(scriptUrl), [], { env: { ...process.env, OPTIONS: JSON.stringify(options) } });
+  const exited = new Promise((resolve) => child.once("exit", resolve));
+  const first = new Promise((resolve) => child.once("message", (m) => resolve(m.step)));
+  const steps = [];
+  const waiting = [];
+  child.on("message", (m) => {
+    steps.push(m.step);
+    for (const w of waiting) if (w.pattern.test(m.step)) w.resolve(m.step);
+  });
+  return {
+    firstStep: () => first,
+    // Wait for a report that matches `pattern`, for example /still working/.
+    waitFor: (pattern) => new Promise((resolve) => {
+      const seen = steps.find((s) => pattern.test(s));
+      if (seen) resolve(seen);
+      else waiting.push({ pattern, resolve });
+    }),
+    kill: async () => {
+      child.kill("SIGKILL");
+      await exited;
+    },
+    exited,
+    steps,
+    send: (message) => child.send(message),
+  };
+}
+
 // The worker side. `setup(name, options)` opens connections and returns the
 // function to run on "go"; that function returns a report object.
 export function workerMain(setup) {

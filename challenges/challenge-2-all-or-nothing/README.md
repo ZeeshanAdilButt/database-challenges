@@ -17,7 +17,7 @@ This is the same story as challenge 1.
   2. **create its session**: add one row to the `sessions` table.
   3. **log an event**: add one row to the `events` table that says `session created`.
 
-Between write 1 and write 3, the watcher can die at any moment. In this challenge it really does. The scripts kill the watcher process with SIGKILL right after a write that we choose. Then they start the watcher again and look at the database.
+Between write 1 and write 3, the watcher can die at any moment. In this challenge it really does. The scripts kill the watcher process with SIGKILL right after a write that we choose. Then they start the watcher again and look at the database. Every step runs on three databases: SQLite, PostgreSQL and MySQL.
 
 ## Words to know (101)
 
@@ -37,17 +37,22 @@ Between write 1 and write 3, the watcher can die at any moment. In this challeng
 | allowed move | A change of status that the rules permit, for example `pending` to `claimed`. |
 | stale move | A move based on old information. For example, a message says "the task is claimed, start it" but the task is already `done`. |
 | recovery | A step a program runs when it starts, to repair what its last crash left behind. |
+| isolation level | The rule for what one statement may see of the work of other transactions. PostgreSQL's default is Read Committed. MySQL's default is Repeatable Read. Part 4 shows what each default means for a claim. |
+| SQLite | A database that is one file. It is built into Node.js, so it needs nothing extra. |
+| PostgreSQL | A database server. In this repository it runs in Docker. |
+| MySQL | Another database server. It also runs in Docker. |
 
 ## How to run
 
-You need Node.js 22.13 or newer. PostgreSQL is optional. SQLite is built into Node.js and needs nothing.
+You need Node.js 22.13 or newer. PostgreSQL and MySQL are optional. SQLite is built into Node.js and needs nothing.
 
 ```
 npm install
 npm run db:up
+npm run doctor
 ```
 
-`npm run db:up` starts PostgreSQL with Docker (see `docker-compose.yml`). If you skip it, the scripts run on SQLite only and tell you so.
+`npm run db:up` starts PostgreSQL 17 and MySQL 8.4 with Docker (see `docker-compose.yml`). MySQL needs about 30 seconds to start the first time. `npm run doctor` checks your setup. When everything is ready it shows five OK lines: Node.js, SQLite, the `pg` and `mysql2` packages, PostgreSQL and MySQL. If you skip Docker, the scripts run on SQLite only. A database that is not running is skipped, and the script tells you how to start it.
 
 Run each part from the repository root:
 
@@ -66,7 +71,7 @@ To check that the results still hold:
 npm test
 ```
 
-`npm test` runs every test in the repository, one test file at a time. The PostgreSQL tests are skipped, with a message, when PostgreSQL is not running.
+`npm test` runs every test in the repository, one test file at a time. The tests of a database that is not running are skipped, with a message.
 
 ## The watcher
 
@@ -74,31 +79,31 @@ Parts 1 to 3 use the same file: [watcher.js](watcher.js). Part 4 does not start 
 
 | Step | What happens | Code |
 | --- | --- | --- |
-| 1 | Read the options: which database, whether to use a transaction, where to crash. | [watcher.js#L14-L16](watcher.js#L14-L16) |
-| 2 | Open one connection to the database. | [watcher.js#L17](watcher.js#L17) |
-| 3 | Define `step()`. It tells the parent script what just happened, and waits until the message is sent, because a crash right after would lose it. | [watcher.js#L21](watcher.js#L21) |
-| 4 | Only if `recover` is on: mark this watcher's own `running` tasks as `failed` and log `interrupted by a restart`. Used in part 3. | [watcher.js#L30-L44](watcher.js#L30-L44) |
-| 5 | Look for the oldest task whose status is `pending`. | [watcher.js#L46](watcher.js#L46) |
-| 6 | If there is none, say so and finish. | [watcher.js#L47-L48](watcher.js#L47-L48) |
-| 7 | Only if `transaction` is on: send `BEGIN`. | [watcher.js#L55-L58](watcher.js#L55-L58) |
-| 8 | Run the three writes in order: claim, session, event. | [watcher.js#L50-L54](watcher.js#L50-L54) and [watcher.js#L59-L63](watcher.js#L59-L63) |
-| 9 | If `crashAfter` names the write that just ran, kill this process with SIGKILL. | [watcher.js#L62](watcher.js#L62) and [watcher.js#L24-L28](watcher.js#L24-L28) |
-| 10 | Only if `transaction` is on: send `COMMIT`. | [watcher.js#L64-L67](watcher.js#L64-L67) |
-| 11 | Only if `startRunning` is on: move the task from `claimed` to `running`, and maybe die while it runs. Used in part 3. | [watcher.js#L68-L72](watcher.js#L68-L72) |
-| 12 | Close the connection. | [watcher.js#L74](watcher.js#L74) |
+| 1 | Read the options: which database, whether to use a transaction, where to crash. | [watcher.js#L15-L17](watcher.js#L15-L17) |
+| 2 | Open one connection to the database. | [watcher.js#L18](watcher.js#L18) |
+| 3 | Define `step()`. It tells the parent script what just happened, and waits until the message is sent, because a crash right after would lose it. | [watcher.js#L22](watcher.js#L22) |
+| 4 | Only if `recover` is on: mark this watcher's own `running` tasks as `failed` and log `interrupted by a restart`. Used in part 3. PostgreSQL and SQLite do it in one `UPDATE ... RETURNING id`. MySQL has no `RETURNING`, so it first selects the ids and then moves each task with a checked `UPDATE`. | [watcher.js#L31-L55](watcher.js#L31-L55) |
+| 5 | Look for the oldest task whose status is `pending`. | [watcher.js#L57](watcher.js#L57) |
+| 6 | If there is none, say so and finish. | [watcher.js#L58-L59](watcher.js#L58-L59) |
+| 7 | Only if `transaction` is on: send `BEGIN`. | [watcher.js#L66-L69](watcher.js#L66-L69) |
+| 8 | Run the three writes in order: claim, session, event. | [watcher.js#L61-L65](watcher.js#L61-L65) and [watcher.js#L70-L72](watcher.js#L70-L72) |
+| 9 | If `crashAfter` names the write that just ran, kill this process with SIGKILL. | [watcher.js#L73](watcher.js#L73) and [watcher.js#L25-L29](watcher.js#L25-L29) |
+| 10 | Only if `transaction` is on: send `COMMIT`. | [watcher.js#L75-L78](watcher.js#L75-L78) |
+| 11 | Only if `startRunning` is on: move the task from `claimed` to `running`, and maybe die while it runs. Used in part 3. | [watcher.js#L79-L82](watcher.js#L79-L82) |
+| 12 | Close the connection. | [watcher.js#L89](watcher.js#L89) |
 
 Two details to notice:
 
 - The crash at step 9 happens before the `COMMIT` at step 10. So in part 2 the watcher always dies with its transaction still open.
 - Step 5 only looks for `pending`. A task in any other status is invisible to a restarted watcher. This one line is the cause of two of the problems you will see.
 
-The watcher uses the three tables defined in [toolkit/db.js](../../toolkit/db.js#L26-L63).
+The watcher uses the three tables defined in [toolkit/db.js](../../toolkit/db.js#L34-L91), one version for each database.
 
 ## Part 1: a crash halfway
 
 [Read part 1](part-1-crash-halfway/README.md)
 
-There is no transaction, so every write is saved the moment it runs. Kill the watcher after the claim, and the task is `claimed` with no session. The restarted watcher only looks for `pending` tasks, so nobody ever starts it. Kill it after the session, and the task has a session but no event.
+There is no transaction, so every write is saved the moment it runs. Kill the watcher after the claim, and the task is `claimed` with no session. The restarted watcher only looks for `pending` tasks, so nobody ever starts it. Kill it after the session, and the task has a session but no event. All three databases give the same answer.
 
 ![Bar chart: with no transaction, a crash leaves rows missing for task 1](part-1-crash-halfway/chart.svg)
 
@@ -106,7 +111,7 @@ There is no transaction, so every write is saved the moment it runs. Kill the wa
 
 [Read part 2](part-2-transaction/README.md)
 
-The same kills, now with the three writes inside `BEGIN` and `COMMIT`. The watcher dies before the `COMMIT`, so the database throws the writes away. The task is still `pending`, and the restarted watcher starts it once. The part also shows an error halfway, with and without `ROLLBACK`.
+The same kills, now with the three writes inside `BEGIN` and `COMMIT`. The watcher dies before the `COMMIT`, so the database throws the writes away. The task is still `pending`, and the restarted watcher starts it once. The part also shows an error halfway, with and without `ROLLBACK`. Again all three databases agree.
 
 ![Bar chart: with a transaction, every case ends with 1 session and 1 event](part-2-transaction/chart.svg)
 
@@ -116,7 +121,7 @@ A transaction makes several writes all or nothing. It does not, by itself, stop 
 
 [Read part 3](part-3-valid-moves/README.md)
 
-A task may only move along allowed paths. Part 3 shows three guards: a table of allowed moves in the code, a checked `UPDATE` that changes 0 rows when the move is late, and a `CHECK` in the table that refuses a typo. Then the watcher dies while a task is `running`, and you see why a restart needs a recovery step.
+A task may only move along allowed paths. Part 3 shows three guards: a table of allowed moves in the code, a checked `UPDATE` that changes 0 rows when the move is late, and a `CHECK` in the table that refuses a typo. Each database refuses the typo with its own message. Then the watcher dies while a task is `running`, and you see why a restart needs a recovery step. MySQL has no `RETURNING`, so its recovery takes one more step than the other two.
 
 ![Bar chart: without recovery the task stays running, with recovery it is marked failed](part-3-valid-moves/chart.svg)
 
@@ -124,14 +129,14 @@ A task may only move along allowed paths. Part 3 shows three guards: a table of 
 
 [Read part 4](part-4-not-a-lock/README.md)
 
-Does a transaction stop the race from challenge 1? Two watchers read the same task, both inside `BEGIN` and `COMMIT`, and A commits first. On PostgreSQL, B's unchecked claim still works, and task 1 gets 2 sessions. The checked `UPDATE` from challenge 1 gives 1 session. On SQLite, B's claim fails with error 517 `database is locked` and is rolled back, so there is 1 session. But that is an error you must handle, and [challenge 3 part 3](../challenge-3-locks/part-3-one-writer/README.md) explains it.
+Does a transaction stop the race from challenge 1? Two watchers read the same task, both inside `BEGIN` and `COMMIT`, and A commits first. On PostgreSQL and on MySQL, B's unchecked claim still works, and task 1 gets 2 sessions. MySQL's default isolation level is Repeatable Read, yet its `UPDATE` reads the latest committed row, so it shows 2 sessions, like PostgreSQL. The checked `UPDATE` from challenge 1 gives 1 session on both. On SQLite, B's claim fails with error 517 `database is locked` and is rolled back, so there is 1 session. Only SQLite has this error, and it is an error you must handle. [Challenge 3 part 3](../challenge-3-locks/part-3-one-writer/README.md) explains it.
 
-![Bar chart: with a transaction around each claim, task 1 gets 2 sessions on PostgreSQL with the unchecked UPDATE and 1 session in the other three cases](part-4-not-a-lock/chart.svg)
+![Bar chart: with a transaction around each claim, task 1 gets 2 sessions on PostgreSQL and MySQL with the unchecked UPDATE and 1 session in the other four cases](part-4-not-a-lock/chart.svg)
 
 ## What you can say after this challenge
 
 - Without a transaction, a crash between two writes leaves a half-written start, and the database cannot tell.
 - With a transaction, a crash before `COMMIT` leaves nothing at all, and a restart can safely try again.
 - A status needs rules: which statuses exist, and which moves between them are allowed.
-- A transaction groups your own writes. It is not a lock: on PostgreSQL, two watchers inside transactions can still both claim the same task, unless the `UPDATE` checks the status.
+- A transaction groups your own writes. It is not a lock: on PostgreSQL and MySQL, two watchers inside transactions can still both claim the same task, unless the `UPDATE` checks the status.
 - Work that takes a long time cannot sit inside one transaction. After a restart, a recovery step has to clean up what the crash left behind.

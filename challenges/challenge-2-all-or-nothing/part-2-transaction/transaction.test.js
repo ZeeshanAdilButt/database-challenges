@@ -2,14 +2,12 @@
 // and the restarted watcher must start the task exactly once.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { postgresIsUp } from "../../../toolkit/db.js";
+import { DATABASES, skipUnless } from "../../../toolkit/db.js";
 import { crashThenRestart, verdict } from "../part-1-crash-halfway/crash.js";
 import { errorHalfway } from "./transaction.js";
 
-const pgUp = await postgresIsUp();
-
-for (const kind of ["sqlite", "postgres"]) {
-  const skip = kind === "postgres" && !pgUp && "PostgreSQL is not running (npm run db:up)";
+for (const kind of DATABASES) {
+  const skip = await skipUnless(kind);
 
   for (const crashAfter of ["claim", "session"]) {
     test(`${kind}: crash after ${crashAfter} inside a transaction`, { skip }, async () => {

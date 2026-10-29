@@ -7,12 +7,13 @@
 //                after that write, like a power cut or a closed laptop lid
 //   startRunning true: after the commit, move the task on to "running"
 //   crashWhileRunning  true: then die while the task is running
+//   holdWhileRunning   true: then stay alive, working on it (challenge 4 uses this)
 //   recover      true: on start, first mark tasks this watcher left running
 //                as "failed" (what a restarted watcher should do)
 import { connect } from "../../toolkit/db.js";
 
 const options = JSON.parse(process.env.OPTIONS);
-const { kind, dbName, transaction, crashAfter, startRunning, crashWhileRunning, recover } = options;
+const { kind, dbName, transaction, crashAfter, startRunning, crashWhileRunning, holdWhileRunning, recover } = options;
 const me = options.name ?? "A";
 const db = await connect(kind, dbName);
 
@@ -62,6 +63,10 @@ if (!task) {
     await db.run("UPDATE tasks SET status = 'running' WHERE id = $1 AND status = 'claimed'", [task.id]);
     await step(`task ${task.id} is running`);
     if (crashWhileRunning) await crash();
+    if (holdWhileRunning) {
+      await step("still working on it");
+      setInterval(() => {}, 1000); // alive until the parent kills this process
+    }
   }
 }
 await db.close();

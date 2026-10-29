@@ -6,8 +6,8 @@
 //   node wait.js           run on SQLite and PostgreSQL, write results.md and the chart
 //   node wait.js --chart   redraw the chart from results.md only
 import path from "node:path";
-import { addTasks, freshDatabase, isMain, postgresIsUp, taskState, versions } from "../../../toolkit/db.js";
-import { runUntilExit } from "../../../toolkit/workers.js";
+import { addTasks, freshDatabase, isMain, availableDatabases, taskState, versions } from "../../../toolkit/db.js";
+import { startProcess } from "../../../toolkit/workers.js";
 import { readTable, writeResults } from "../../../toolkit/results.js";
 import { waitChart } from "../../../toolkit/chart.js";
 
@@ -29,21 +29,28 @@ export async function sqliteHasNoForUpdate() {
   }
 }
 
-// Start A and B as two processes. B asks for its lock 50 ms after A.
+// Start B first and let it connect. Then start A and wait until A holds its
+// lock. Only then does B ask, so B always asks second, right after A, however
+// busy the machine is.
 export async function race(kind, bTask) {
   const dbName = `c3p1-${bTask}`;
   const db = await freshDatabase(kind, dbName);
   await addTasks(db, 2);
-  const t0 = Date.now() + 400; // time for both processes to connect first
-  const common = { mode: "hold", kind, dbName, t0, holdMs: HOLD_MS };
-  const [a, b] = await Promise.all([
-    runUntilExit(WORKER, { ...common, name: "A", taskId: 1, startAt: 0 }),
-    runUntilExit(WORKER, { ...common, name: "B", taskId: bTask, startAt: 50 }),
-  ]);
+  const t0 = Date.now();
+  const common = { mode: "hold", kind, dbName, t0, holdMs: HOLD_MS, startAt: 0 };
+  const b = startProcess(WORKER, { ...common, name: "B", taskId: bTask, waitForGo: true });
+  await b.waitFor(/^ready$/);
+  const a = startProcess(WORKER, { ...common, name: "A", taskId: 1 });
+  await a.waitFor(/^locked$/);
+  b.send({ type: "go" });
+  await Promise.all([a.exited, b.exited]);
   const sessions = (await taskState(db, 1)).sessions + (await taskState(db, 2)).sessions;
   await db.close();
-  const [ra, rb] = [a.steps[0], b.steps[0]];
-  return { a: ra, b: rb, bWaited: rb.got - rb.asked, sessions };
+  // Times in ms after A asked for its lock.
+  const ra = a.steps.at(-1);
+  const rb = b.steps.at(-1);
+  const shift = (r) => ({ ...r, asked: r.asked - ra.asked, got: r.got - ra.asked, done: r.done - ra.asked });
+  return { a: shift(ra), b: shift(rb), bWaited: rb.got - rb.asked, sessions };
 }
 
 function drawChart() {
@@ -67,9 +74,7 @@ function drawChart() {
 
 async function main() {
   if (process.argv.includes("--chart")) return drawChart();
-  const kinds = ["sqlite"];
-  if (await postgresIsUp()) kinds.push("postgres");
-  else console.log("PostgreSQL is not running, so only SQLite runs. Start it with: npm run db:up");
+  const kinds = await availableDatabases();
 
   const syntax = await sqliteHasNoForUpdate();
   console.log(`SQLite and FOR UPDATE: ${syntax}`);
@@ -96,7 +101,7 @@ async function main() {
     },
     {
       heading: "Who waited",
-      text: `A locks task 1 at 0 ms and keeps the lock for ${HOLD_MS} ms. B asks for a lock at 50 ms. PostgreSQL uses SELECT ... FOR UPDATE on one row; SQLite uses BEGIN IMMEDIATE, its only way to lock before reading. Times are ms after the start.`,
+      text: `A locks task 1 and keeps the lock for ${HOLD_MS} ms. B asks for a lock as soon as A holds its own. PostgreSQL uses SELECT ... FOR UPDATE on one row; SQLite uses BEGIN IMMEDIATE, its only way to lock before reading. Times are ms after A asked for its lock.`,
       columns: ["database", "scenario", "watcher", "task", "asked (ms)", "got lock (ms)", "done (ms)", "saw", "action"],
       rows,
     },

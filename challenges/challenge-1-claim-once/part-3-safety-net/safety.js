@@ -6,7 +6,7 @@
 //   node safety.js           run on SQLite and PostgreSQL, write results.md and the chart
 //   node safety.js --chart   redraw the chart from results.md only
 import path from "node:path";
-import { addTasks, connect, duplicateSessions, freshDatabase, isMain, postgresIsUp, versions } from "../../../toolkit/db.js";
+import { addTasks, connect, duplicateSessions, freshDatabase, isMain, availableDatabases, versions } from "../../../toolkit/db.js";
 import { runWorkers } from "../../../toolkit/workers.js";
 import { readTable, writeResults } from "../../../toolkit/results.js";
 import { barChart } from "../../../toolkit/chart.js";
@@ -14,7 +14,7 @@ import { barChart } from "../../../toolkit/chart.js";
 const here = import.meta.dirname;
 const RESULTS = path.join(here, "results.md");
 // The safety net: at most one session row per task, checked by the database.
-// YOUR TURN (chapter 1.7): write the CREATE UNIQUE INDEX statement named one_session_per_task.
+// YOUR TURN (chapter 1.8): write the CREATE UNIQUE INDEX statement named one_session_per_task.
 export const ONE_SESSION_PER_TASK = "";
 // END YOUR TURN
 
@@ -71,9 +71,7 @@ function drawChart() {
 
 async function main() {
   if (process.argv.includes("--chart")) return drawChart();
-  const kinds = ["sqlite"];
-  if (await postgresIsUp()) kinds.push("postgres");
-  else console.log("PostgreSQL is not running, so only SQLite runs. Start it with: npm run db:up");
+  const kinds = await availableDatabases();
 
   const errors = [];
   const runs = [];

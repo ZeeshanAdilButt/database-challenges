@@ -2,13 +2,11 @@
 // every task gets exactly one session, on both databases.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { postgresIsUp } from "../../../toolkit/db.js";
+import { DATABASES, skipUnless } from "../../../toolkit/db.js";
 import { realRun, stepByStep } from "./claim.js";
 
-const pgUp = await postgresIsUp();
-
-for (const kind of ["sqlite", "postgres"]) {
-  const skip = kind === "postgres" && !pgUp && "PostgreSQL is not running (npm run db:up)";
+for (const kind of DATABASES) {
+  const skip = await skipUnless(kind);
 
   test(`${kind}: the second claim changes 0 rows`, { skip }, async () => {
     const { steps, sessions } = await stepByStep(kind);

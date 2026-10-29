@@ -16,10 +16,10 @@ const now = () => Date.now() - o.t0;
 const report = (data) => new Promise((resolve) => process.send({ type: "step", step: data }, resolve));
 
 // Lock one task row so nobody else can claim it until we commit.
-// PostgreSQL locks just that row. SQLite has no row locks: BEGIN IMMEDIATE
-// takes the one write lock for the whole database file.
+// PostgreSQL and MySQL lock just that row. SQLite has no row locks: BEGIN
+// IMMEDIATE takes the one write lock for the whole database file.
 async function lockTask(taskId) {
-  if (db.kind === "postgres") {
+  if (db.kind === "postgres" || db.kind === "mysql") {
     await db.exec("BEGIN");
     return (await db.query("SELECT id, status FROM tasks WHERE id = $1 FOR UPDATE", [taskId]))[0];
   }
@@ -33,10 +33,18 @@ async function claimAndStart(taskId) {
 }
 
 async function hold() {
+  if (o.waitForGo) {
+    // Connected and ready: wait for the parent to say when to ask.
+    // once: a listener that stays would keep this process alive after its work.
+    const go = new Promise((resolve) => process.once("message", resolve));
+    await report("ready");
+    await go;
+  }
   await sleep(Math.max(0, o.t0 + o.startAt - Date.now()));
   const asked = now();
   const task = await lockTask(o.taskId);
   const got = now();
+  await report("locked"); // tell the parent, so it can start the next watcher now
   let action = "skipped: already claimed";
   if (task.status === "pending") {
     await sleep(o.holdMs); // the work done while holding the lock
@@ -75,8 +83,9 @@ const strategies = {
 // Claim the next pending task and create its session in one short
 // transaction, then commit. Returns the task id, or null if none was free.
 async function shortClaim() {
-  // YOUR TURN (chapter 3.7): BEGIN (BEGIN IMMEDIATE on SQLite), claim the next pending task with UPDATE ... RETURNING id,
-  // insert its session, COMMIT, and return the id. If nothing was claimed, COMMIT and return null.
+  // YOUR TURN (chapter 3.7): BEGIN (BEGIN IMMEDIATE on SQLite), claim the next pending task in one UPDATE
+  // (RETURNING id on PostgreSQL and SQLite, LAST_INSERT_ID(id) on MySQL), insert its session, COMMIT,
+  // and return the id. If nothing was claimed, COMMIT and return null.
   throw new Error("Your turn: write shortClaim() in lock-worker.js (chapter 3.7)");
   // END YOUR TURN
 }
@@ -93,7 +102,7 @@ async function drain() {
       const id = await shortClaim();
       waited += now() - t;
       if (id === null) {
-        const [{ left }] = await db.query("SELECT COUNT(*) AS left FROM tasks WHERE status = 'pending'");
+        const [{ pending_left: left }] = await db.query("SELECT COUNT(*) AS pending_left FROM tasks WHERE status = 'pending'");
         if (left === 0) break;
         continue;
       }
@@ -107,7 +116,7 @@ async function drain() {
     if (id === null) {
       await db.exec("COMMIT");
       // Nothing we could lock. Stop only if the queue is really empty.
-      const [{ left }] = await db.query("SELECT COUNT(*) AS left FROM tasks WHERE status = 'pending'");
+      const [{ pending_left: left }] = await db.query("SELECT COUNT(*) AS pending_left FROM tasks WHERE status = 'pending'");
       if (left === 0) break;
       await sleep(2);
       continue;

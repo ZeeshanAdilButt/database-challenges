@@ -5,7 +5,7 @@
 //   node transaction.js           run on SQLite and PostgreSQL, write results.md and the chart
 //   node transaction.js --chart   redraw the chart from results.md only
 import path from "node:path";
-import { addTasks, freshDatabase, isMain, postgresIsUp, taskState, versions } from "../../../toolkit/db.js";
+import { addTasks, freshDatabase, isMain, availableDatabases, taskState, versions } from "../../../toolkit/db.js";
 import { readTable, writeResults } from "../../../toolkit/results.js";
 import { barChart } from "../../../toolkit/chart.js";
 import { crashThenRestart, verdict } from "../part-1-crash-halfway/crash.js";
@@ -50,9 +50,7 @@ function drawChart() {
 
 async function main() {
   if (process.argv.includes("--chart")) return drawChart();
-  const kinds = ["sqlite"];
-  if (await postgresIsUp()) kinds.push("postgres");
-  else console.log("PostgreSQL is not running, so only SQLite runs. Start it with: npm run db:up");
+  const kinds = await availableDatabases();
 
   const runs = [];
   const errors = [];

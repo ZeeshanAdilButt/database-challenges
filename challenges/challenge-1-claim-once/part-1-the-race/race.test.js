@@ -2,13 +2,11 @@
 // saves two sessions for one task, on both databases.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { postgresIsUp } from "../../../toolkit/db.js";
+import { DATABASES, skipUnless } from "../../../toolkit/db.js";
 import { realRun, stepByStep } from "./race.js";
 
-const pgUp = await postgresIsUp();
-
-for (const kind of ["sqlite", "postgres"]) {
-  const skip = kind === "postgres" && !pgUp && "PostgreSQL is not running (npm run db:up)";
+for (const kind of DATABASES) {
+  const skip = await skipUnless(kind);
 
   test(`${kind}: both watchers claim the same task`, { skip }, async () => {
     const { steps, sessions } = await stepByStep(kind);
